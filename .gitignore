@@ -8,3 +8,6 @@
 # production
 
 # misc
+
+# enviroment variable
+.env

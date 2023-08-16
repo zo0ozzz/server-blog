@@ -2,11 +2,15 @@ const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
+const dotenv = require("dotenv");
+dotenv.config();
+const PORT = process.env.PORT;
+const DB_ID = process.env.DB_ID;
+const DB_PASSWORD = process.env.DB_PASSWORD;
 // 서버에 쓰기 권한을 승인.
 const { MongoClient, ServerApiVersion } = require("mongodb");
 
-const uri =
-  "mongodb+srv://zo0ozzz:<password>@cluster0.cndvfyw.mongodb.net/?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${DB_ID}:${DB_PASSWORD}@cluster0.cndvfyw.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -16,6 +20,44 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+let db;
+const dbName = "blog";
+
+async function runDB() {
+  try {
+    await client.connect();
+
+    db = client.db(dbName);
+
+    console.log("DB 연결 완료");
+  } catch (error) {
+    console.log("DB 연결 실패");
+  }
+}
+
+runDB();
+
+// client
+//   .connect()
+//   .then(() => {
+//     console.log("mongoDB 연결 완료");
+
+//     db = client.db(dbName);
+//   })
+//   .catch((error) => console.log(error));
+
+// const db = client.db("blog");
+
+// async function runDB() {
+//   try {
+//     await client.connect();
+
+//     const dbName = "blog";
+//     const db = client.db(dbName);
+
+//   }catch {}
+// }
 
 // async function run() {
 //   try {
@@ -32,8 +74,8 @@ const client = new MongoClient(uri, {
 //   }
 // }
 
-const dbName = "blog";
-const db = client.db(dbName);
+// const dbName = "blog";
+// const db = client.db(dbName);
 
 // async function run() {
 //   try {
@@ -108,6 +150,6 @@ app.post("/post/:id", async function (req, res, next) {
   }
 });
 
-app.listen(5000, () => {
+app.listen(PORT, () => {
   console.log("서버 열림(5000)");
 });
