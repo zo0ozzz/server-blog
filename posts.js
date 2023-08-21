@@ -54,47 +54,75 @@ router.post("/", async (req, res, next) => {
     const newPost = req.body;
 
     const db = await getDB();
-    const colCounter = db.collection("counter");
+    const colInfo = db.collection("info");
     const colPost = db.collection("post");
 
-    const findedData = await colCounter.findOne({ _id: "counter" });
-    const totalPostsCount = findedData.postNumber;
-
-    console.log(newPost._id);
+    const info = await colInfo.findOne({ _id: "info" });
+    const lastPost_id = info.lastPost_id;
+    const lastPostNumber = info.lastPostNumber;
 
     await colPost.insertOne({
-      _id: parseInt(newPost._id),
-      number: totalPostsCount + 1,
+      _id: lastPost_id + 1,
+      number: lastPostNumber + 1,
       date: Date.now(),
       title: newPost.title,
       content: newPost.content,
     });
 
-    const findedData2 = await colCounter.updateOne(
-      { _id: "counter" },
-      { $inc: { postNumber: 1 } }
+    await colInfo.updateOne(
+      { _id: "info" },
+      { $inc: { lastPost_id: 1, lastPostNumber: 1 } }
     );
 
-    res.status(200).send({ message: "잘 왔음" });
+    res.status(200).json({ _id: lastPost_id + 1 });
   } catch (error) {
     console.log(error);
   }
 });
 
-router.patch("/", async (req, res, next) => {
+router.patch("/:_id", async (req, res, next) => {
   try {
+    const _id = parseInt(req.params._id);
+
     const db = await getDB();
+    const colPost = db.collection("post");
 
-    const post = req.body;
-    const { _id, title, content } = post;
+    const editedPost = req.body;
+    const editedTitle = editedPost.title;
+    const editedContent = editedPost.content;
 
-    const result = await db
-      .collection("post")
-      .updateOne({ _id: _id }, { $set: { title: title, content: content } });
+    const result = await colPost.updateOne(
+      { _id: _id },
+      { $set: { title: editedTitle, content: editedContent } }
+    );
 
-    console.log(result);
+    res.status(200).send();
+  } catch (error) {
+    console.log(error);
+  }
+});
 
-    res.status(200).send("ddd");
+router.delete("/:_id", async (req, res, next) => {
+  try {
+    const _id = parseInt(req.params._id);
+
+    const db = await getDB();
+    const colPost = db.collection("post");
+
+    const result = await colPost.deleteOne({ _id: _id });
+
+    console.log("result: ", result);
+
+    const colInfo = db.collection("info");
+
+    const result2 = await colInfo.updateOne(
+      { _id: "info" },
+      { $inc: { lastPostNumber: -1 } }
+    );
+
+    console.log("result2: ", result2);
+
+    res.status(200).send();
   } catch (error) {
     console.log(error);
   }

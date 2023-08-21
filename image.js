@@ -11,29 +11,33 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname);
 
-    cb(null, file.originalname + ext);
+    cb(null, file.originalname);
   },
 });
 
 const upload = multer({ storage: storage });
+
+router.get("/", express.static("public/image"));
 
 router.use(function timeLog(req, res, next) {
   console.log("iamgeTime: ", Date.now());
   next();
 });
 
-router.get("/", express.static("public/image"));
+router.post("/", upload.single("image"), async (req, res, next) => {
+  try {
+    console.log("몬가.. 몬가 들어옴!");
 
-router.post("/", upload.single("image"), (req, res, next) => {
-  console.log("몬가.. 몬가 들어옴!");
+    const file = req.file;
 
-  const file = req.file;
+    const url = `${baseURL}/image/${file.originalname}`;
 
-  const url = `${baseURL}/image/${file.originalname}`;
+    const obj = { url: url };
 
-  const obj = { url: url };
-
-  res.send(obj);
+    res.status(200).send(obj);
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 module.exports = router;
