@@ -29,6 +29,7 @@ router.post("/", upload.single("image"), async (req, res, next) => {
     console.log("몬가.. 몬가 들어옴!");
 
     const file = req.file;
+    console.log(file);
 
     const url = `${baseURL}/image/${file.originalname}`;
 
