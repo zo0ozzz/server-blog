@@ -16,6 +16,7 @@ app.use(express.json());
 
 app.use("/post", postRouter);
 app.use("/image", imageRouter);
+
 app.get("/create", async (req, res, next) => {
   try {
     const db = await getDB();
@@ -50,3 +51,18 @@ app.delete("/deleteAllData", async (req, res, next) => {
     console.log(error);
   }
 });
+
+// const path = require("path");
+// const fs = require("fs");
+
+// const filePath = "./test/test.txt";
+// const fileName = path.basename(filePath);
+// const dirName = path.dirname(filePath);
+// const extName = path.extname(filePath);
+
+// const text = "하이!";
+// fs.writeFile(filePath, text, (err) => {
+//   if (err) {
+//   } else {
+//   }
+// });
