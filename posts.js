@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const getDB = require("./db.js");
+const getTimeCode = require("./timeCode.js");
 
 router.use(function timeLog(req, res, next) {
-  console.log("Time: ", Date.now());
+  console.log("* /post/... ", getTimeCode());
   next();
 });
 
@@ -64,7 +65,7 @@ router.post("/", async (req, res, next) => {
     await colPost.insertOne({
       _id: lastPost_id + 1,
       number: lastPostNumber + 1,
-      date: Date.now(),
+      date: getTimeCode(),
       title: newPost.title,
       content: newPost.content,
     });
