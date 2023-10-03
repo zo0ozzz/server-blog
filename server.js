@@ -36,12 +36,31 @@ app.get("/create", async (req, res, next) => {
   }
 });
 
+app.get("/search", async (req, res, next) => {
+  try {
+    const db = await getDB();
+    const col = db.collection("post");
+
+    const searchString = req.query.searchString;
+    console.log(searchString);
+
+    const posts = await col.find({ title: searchString }).toArray();
+    console.log(posts);
+
+    res.send(posts);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 app.listen(PORT, () => {
   console.log("서버 열림(5000)");
 });
+
 app.delete("/deleteAllData", async (req, res, next) => {
   try {
     const db = await getDB();
+
     const col = db.collection("post");
 
     col.deleteMany({});
