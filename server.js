@@ -40,21 +40,33 @@ app.get("/search", async (req, res, next) => {
   try {
     const db = await getDB();
     const col = db.collection("post");
+    // const indexing = await col.createIndex({ title: "text" });
 
     const searchString = req.query.searchString;
     console.log(searchString);
 
-    const posts = await col.find({ title: searchString }).toArray();
+    const query = [
+      {
+        $search: {
+          index: "titleSearch",
+          text: {
+            query: searchString,
+            path: "title",
+          },
+        },
+      },
+    ];
+
+    console.log("여기까지는 실행1");
+    const posts = await col.aggregate(query).toArray();
+    console.log("여기까지는 실행2");
     console.log(posts);
 
     res.send(posts);
   } catch (error) {
     console.log(error);
+    next(error);
   }
-});
-
-app.listen(PORT, () => {
-  console.log("서버 열림(5000)");
 });
 
 app.delete("/deleteAllData", async (req, res, next) => {
@@ -69,6 +81,14 @@ app.delete("/deleteAllData", async (req, res, next) => {
   } catch (error) {
     console.log(error);
   }
+});
+
+app.use((error, req, res, next) =>
+  res.status(500).send("서버 오류 발생: " + error.message)
+);
+
+app.listen(PORT, () => {
+  console.log("서버 열림(5000)");
 });
 
 // const path = require("path");
