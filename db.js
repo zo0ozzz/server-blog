@@ -8,7 +8,8 @@ const uri = `mongodb+srv://${ID}:${PASSWORD}@cluster0.cndvfyw.mongodb.net/?retry
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
-    strict: true,
+    // strict: true,
+    strict: false,
     deprecationErrors: true,
   },
 });

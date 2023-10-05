@@ -40,26 +40,29 @@ app.get("/search", async (req, res, next) => {
   try {
     const db = await getDB();
     const col = db.collection("post");
-    // const indexing = await col.createIndex({ title: "text" });
 
     const searchString = req.query.searchString;
-    console.log(searchString);
 
-    const query = [
-      {
-        $search: {
-          index: "titleSearch",
-          text: {
-            query: searchString,
-            path: "title",
-          },
-        },
-      },
-    ];
+    // const query = [
+    //   {
+    //     $search: {
+    //       index: "titleAndContentIndex",
+    //       text: {
+    //         query: searchString,
+    //         path: ["title", "content"],
+    //       },
+    //     },
+    //   },
+    // ];
 
-    console.log("여기까지는 실행1");
-    const posts = await col.aggregate(query).toArray();
-    console.log("여기까지는 실행2");
+    const query = {
+      $or: [
+        { title: { $regex: searchString, $options: "i" } },
+        { content: { $regex: searchString, $options: "i" } },
+      ],
+    };
+    // const posts = await col.aggregate(query).toArray();
+    const posts = await col.find(query).toArray();
     console.log(posts);
 
     res.send(posts);
