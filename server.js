@@ -22,7 +22,7 @@ app.get("/create", async (req, res, next) => {
     const db = await getDB();
     const col = db.collection("counter");
 
-    const updataPost_id = await col.updateOne(
+    const updatePost_id = await col.updateOne(
       { _id: "counter" },
       { $inc: { post_id: 1 } }
     );
