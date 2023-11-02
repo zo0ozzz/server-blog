@@ -86,9 +86,19 @@ app.delete("/deleteAllData", async (req, res, next) => {
   try {
     const db = await getDB();
 
-    const col = db.collection("post");
+    const colPost = db.collection("post");
+    const colInfo = db.collection("info");
 
-    col.deleteMany({});
+    colPost.deleteMany({});
+    colInfo.updateOne(
+      { _id: "info" },
+      {
+        $set: {
+          lastPost_id: 0,
+          lastPostNumber: 0,
+        },
+      }
+    );
 
     res.status(200).send("삭제됨");
   } catch (error) {

@@ -65,9 +65,11 @@ router.post("/", async (req, res, next) => {
     await colPost.insertOne({
       _id: lastPost_id + 1,
       number: lastPostNumber + 1,
-      date: getTimeCode(),
+      createDate: getTimeCode(),
+      lastEditDate: getTimeCode(),
       title: newPost.title,
       content: newPost.content,
+      category: newPost.category,
     });
 
     await colInfo.updateOne(
@@ -91,10 +93,18 @@ router.patch("/:_id", async (req, res, next) => {
     const editedPost = req.body;
     const editedTitle = editedPost.title;
     const editedContent = editedPost.content;
+    const editedCategory = editedPost.category;
 
     const result = await colPost.updateOne(
       { _id: _id },
-      { $set: { title: editedTitle, content: editedContent } }
+      {
+        $set: {
+          title: editedTitle,
+          content: editedContent,
+          category: editedCategory,
+          lastEditDate: getTimeCode(),
+        },
+      }
     );
 
     res.status(200).send();
