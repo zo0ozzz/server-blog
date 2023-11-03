@@ -17,17 +17,28 @@ router.use(async (req, res, next) => {
 
 router.get("/", async (req, res, next) => {
   const db = await getDB();
+  const col = db.collection("post");
 
-  console.log("get, /post");
+  const queryString = req.query.category;
 
-  try {
-    const col = db.collection("post");
+  if (!queryString) {
+    try {
+      const posts = await col.find().toArray();
 
-    const posts = await col.find().toArray();
+      res.send(posts);
+    } catch (error) {
+      console.log(error);
+    }
+  } else {
+    console.log("쿼리스트링 있음", queryString);
+    try {
+      const posts = await col.find({ category: queryString }).toArray();
+      console.log(posts);
 
-    res.send(posts);
-  } catch (error) {
-    console.log(error);
+      res.send(posts);
+    } catch (error) {
+      console.log(error);
+    }
   }
 });
 
@@ -49,6 +60,11 @@ router.get("/:_id", async (req, res, next) => {
     console.log(error);
   }
 });
+
+// router.get("/category", async (req, res, next) => {
+//   const searchString = req.query.category;
+//   console.log(searchString);
+// });
 
 router.post("/", async (req, res, next) => {
   try {
