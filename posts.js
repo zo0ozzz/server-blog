@@ -21,36 +21,6 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-router.get("/:_id", async (req, res, next) => {
-  try {
-    const _id = parseInt(req.params._id);
-
-    const db = await getDB();
-    const col = db.collection("post");
-
-    const post = await col.findOne({ _id: _id });
-
-    res.status(200).send(post);
-  } catch (error) {
-    console.log(error);
-  }
-});
-
-router.get("/categories/:selectedCategory", async (req, res, next) => {
-  try {
-    const selectedCategory = req.params.selectedCategory;
-
-    const db = await getDB();
-    const col = db.collection("post");
-
-    const posts = await col.find({ category: selectedCategory }).toArray();
-
-    res.send(posts);
-  } catch (error) {
-    console.log(error);
-  }
-});
-
 router.get("/search", async (req, res, next) => {
   try {
     const searchString = req.query.searchString;
@@ -95,6 +65,37 @@ router.get("/search", async (req, res, next) => {
   } catch (error) {
     console.log(error);
     next(error);
+  }
+});
+
+router.get("/:_id", async (req, res, next) => {
+  try {
+    console.log(req.params._id);
+    const _id = parseInt(req.params._id);
+
+    const db = await getDB();
+    const col = db.collection("post");
+
+    const post = await col.findOne({ _id: _id });
+
+    res.status(200).send(post);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+router.get("/categories/:selectedCategory", async (req, res, next) => {
+  try {
+    const selectedCategory = req.params.selectedCategory;
+
+    const db = await getDB();
+    const col = db.collection("post");
+
+    const posts = await col.find({ category: selectedCategory }).toArray();
+
+    res.send(posts);
+  } catch (error) {
+    console.log(error);
   }
 });
 
