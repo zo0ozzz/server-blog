@@ -18,13 +18,13 @@ router.get("/", async (req, res, next) => {
     res.send(posts);
   } catch (error) {
     console.log(error);
+    next(error);
   }
 });
 
 router.get("/search", async (req, res, next) => {
   try {
     const searchString = req.query.searchString;
-    console.log(searchString);
 
     const db = await getDB();
     const col = db.collection("post");
@@ -59,7 +59,6 @@ router.get("/search", async (req, res, next) => {
     // - 대상을 하나하나 다 순회해야 해서 리소스가 많이 듦.
 
     const posts = await col.find(query).toArray();
-    console.log(posts);
 
     res.status(200).send(posts);
   } catch (error) {
@@ -70,7 +69,6 @@ router.get("/search", async (req, res, next) => {
 
 router.get("/:_id", async (req, res, next) => {
   try {
-    console.log(req.params._id);
     const _id = parseInt(req.params._id);
 
     const db = await getDB();
@@ -81,19 +79,46 @@ router.get("/:_id", async (req, res, next) => {
     res.status(200).send(post);
   } catch (error) {
     console.log(error);
+    next(error);
   }
 });
 
-router.get("/categories/:selectedCategory", async (req, res, next) => {
+router.get("/categories/:category", async (req, res, next) => {
   try {
-    const selectedCategory = req.params.selectedCategory;
+    const category = req.params.category;
 
-    const db = await getDB();
-    const col = db.collection("post");
+    if (category === "전체") {
+      const db = await getDB();
+      const col = db.collection("post");
 
-    const posts = await col.find({ category: selectedCategory }).toArray();
+      const posts = await col.find().toArray();
 
-    res.send(posts);
+      res.send(posts);
+
+      return;
+    }
+
+    if (category === "미분류") {
+      const db = await getDB();
+      const col = db.collection("post");
+
+      const posts = await col.find({ category: "" }).toArray();
+
+      res.send(posts);
+
+      return;
+    }
+
+    if (category !== "전체" && category !== "미분류") {
+      const db = await getDB();
+      const col = db.collection("post");
+
+      const posts = await col.find({ category: category }).toArray();
+
+      res.send(posts);
+
+      return;
+    }
   } catch (error) {
     console.log(error);
   }
@@ -189,7 +214,7 @@ router.delete("/:_id", async (req, res, next) => {
 });
 
 router.use((err, req, res, next) => {
-  console.log("여기서 처리: ", err);
+  console.log("끝단에서 에러 처리: ", err);
 });
 
 module.exports = router;
