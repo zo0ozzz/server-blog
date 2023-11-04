@@ -151,6 +151,9 @@ router.post("/", async (req, res, next) => {
       { $inc: { lastPost_id: 1, lastPostNumber: 1 } }
     );
 
+    const targetCategory = `categoryPostsCount.${newPost.category}`;
+    await colInfo.updateOne({ _id: "info" }, { $inc: { [targetCategory]: 1 } });
+
     res.status(200).json({ _id: lastPost_id + 1 });
   } catch (error) {
     console.log(error);
