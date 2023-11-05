@@ -84,6 +84,19 @@ const dateUtils = {
 
     return `${year}${month}${date}${day}${hour}${minute}${second}`;
   },
+
+  getType1: function () {
+    const now = this.now();
+    const year = now.getFullYear().toString();
+    const month = ("0" + (now.getMonth() + 1).toString()).slice(-2);
+    const date = ("0" + now.getDate()).slice(-2);
+    const day = ["일", "월", "화", "수", "목", "금", "토"][now.getDay()];
+    const hour = ("0" + now.getHours().toString()).slice(-2);
+    const minute = ("0" + now.getMinutes().toString()).slice(-2);
+    const second = ("0" + now.getSeconds().toString()).slice(-2);
+
+    return `${year}. ${month}. ${date}. (${day}) ${hour}:${minute}:${second}`;
+  },
 };
 
 module.exports = { dateUtils };
