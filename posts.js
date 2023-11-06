@@ -159,9 +159,8 @@ router.post("/", async (req, res, next) => {
 
     const newInfo = await colInfo.findOne({ _id: "info" });
     const categoryPostsCountValue = newInfo.categoryPostsCount;
-    console.log(categoryPostsCountValue);
 
-    res.status(200).json({
+    res.status(200).send({
       _id: lastPost_id + 1,
       categoryPostsCountValue: categoryPostsCountValue,
     });
@@ -190,7 +189,10 @@ router.patch("/updateCategories", async (req, res, next) => {
       { $set: { categoryPostsCount: categoryPostsCountObj } }
     );
 
-    res.status(200);
+    const info = await colInfo.findOne({ _id: "info" });
+    const categoryPostsCountValue = info.categoryPostsCount;
+
+    res.status(200).send(categoryPostsCountValue);
   } catch (error) {
     console.log(error);
   }
@@ -224,6 +226,8 @@ router.patch("/:_id", async (req, res, next) => {
       }
     );
 
+    let info = null;
+
     if (prevCategory !== editedCategory) {
       const targetCategory1 = `categoryPostsCount.${prevCategory}`;
       const targetCategory2 = `categoryPostsCount.${editedCategory}`;
@@ -233,10 +237,12 @@ router.patch("/:_id", async (req, res, next) => {
         { $inc: { [targetCategory1]: -1, [targetCategory2]: 1 } }
       );
 
-      return;
+      info = await colInfo.findOne({ _id: "info" });
     }
 
-    res.status(200).send();
+    const categoryPostsCountValue = info.categoryPostsCount;
+
+    res.status(200).send(categoryPostsCountValue);
   } catch (error) {
     console.log(error);
   }
