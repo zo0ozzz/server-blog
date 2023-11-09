@@ -171,6 +171,34 @@ router.post("/", async (req, res, next) => {
 
 router.patch("/updateCategories", async (req, res, next) => {
   try {
+    // const categoryData = req.body;
+
+    // const db = await getDB();
+    // const colPost = db.collection("post");
+    // const colInfo = db.collection("info");
+
+    // const newCategoryData = categoryData.map(({name}) => {
+    //   const result = await colPost.find({category: name})
+    //   return
+    // })
+
+    // const newCategoryData = {};
+    // for (let eachCategory of categoryData) {
+    //   const result = await colPost.find({ category: eachCategory }).toArray();
+    //   const count = result.length;
+    //   categoryPostsCountObj[eachCategory] = count;
+    // }
+
+    // await colInfo.updateOne(
+    //   { _id: "info" },
+    //   { $set: { categoryPostsCount: categoryPostsCountObj } }
+    // );
+
+    // const info = await colInfo.findOne({ _id: "info" });
+    // const categoryPostsCountValue = info.categoryPostsCount;
+
+    // res.status(200).send(categoryPostsCountValue);
+
     const newCategories = req.body;
 
     const db = await getDB();
