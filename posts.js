@@ -98,18 +98,18 @@ router.get("/categories/:category", async (req, res, next) => {
       return;
     }
 
-    if (category === "미분류") {
-      const db = await getDB();
-      const col = db.collection("post");
+    // if (category === "미분류") {
+    //   const db = await getDB();
+    //   const col = db.collection("post");
 
-      const posts = await col.find({ category: "" }).toArray();
+    //   const posts = await col.find({ category: "미분류" }).toArray();
 
-      res.send(posts);
+    //   res.send(posts);
 
-      return;
-    }
+    //   return;
+    // }
 
-    if (category !== "전체" && category !== "미분류") {
+    if (category !== "전체") {
       const db = await getDB();
       const col = db.collection("post");
 
@@ -132,8 +132,6 @@ router.post("/", async (req, res, next) => {
     const colInfo = db.collection("info");
     const colPost = db.collection("post");
 
-    console.log(1);
-
     const info = await colInfo.findOne({ _id: "info" });
     const lastPost_id = info.lastPost_id;
     const lastPostNumber = info.lastPostNumber;
@@ -148,9 +146,7 @@ router.post("/", async (req, res, next) => {
       category: newPost.category,
     });
 
-    console.log(newPost.category);
-
-    const targetCategory = `categoryPostsCount.${newPost.category}`;
+    const targetCategory = `categoryData.${newPost.category}`;
 
     await colInfo.updateOne(
       { _id: "info" },
@@ -158,11 +154,11 @@ router.post("/", async (req, res, next) => {
     );
 
     const newInfo = await colInfo.findOne({ _id: "info" });
-    const categoryPostsCountValue = newInfo.categoryPostsCount;
+    const newCategoryData = newInfo.categoryData;
 
     res.status(200).send({
       _id: lastPost_id + 1,
-      categoryPostsCountValue: categoryPostsCountValue,
+      categoryData: newCategoryData,
     });
   } catch (error) {
     console.log(error);
@@ -171,19 +167,42 @@ router.post("/", async (req, res, next) => {
 
 router.patch("/updateCategories", async (req, res, next) => {
   try {
-    // const categoryData = req.body;
+    const categoryData = req.body;
+    // const categories = categoryData.map((item) => item.name);
+
+    const db = await getDB();
+    const colPost = db.collection("post");
+    const colInfo = db.collection("info");
+
+    const newCategoryData = [];
+    for (const { name } of categoryData) {
+      console.log(name);
+      if (name === "전체") {
+        const result = await colInfo.findOne({ _id: "info" });
+        const totalPostCount = result.lastPostNumber;
+        newCategoryData.push({ name: name, postCount: totalPostCount });
+      } else {
+        const result = await colPost.find({ category: name }).toArray();
+        const categoryPostCount = result.length;
+        newCategoryData.push({ name: name, postCount: categoryPostCount });
+      }
+    }
+
+    await colInfo.updateOne(
+      { _id: "info" },
+      { $set: { categoryData: newCategoryData } }
+    );
+
+    res.status(200).send(newCategoryData);
+
+    // const newCategories = req.body;
 
     // const db = await getDB();
     // const colPost = db.collection("post");
     // const colInfo = db.collection("info");
 
-    // const newCategoryData = categoryData.map(({name}) => {
-    //   const result = await colPost.find({category: name})
-    //   return
-    // })
-
-    // const newCategoryData = {};
-    // for (let eachCategory of categoryData) {
+    // const categoryPostsCountObj = {};
+    // for (let eachCategory of newCategories) {
     //   const result = await colPost.find({ category: eachCategory }).toArray();
     //   const count = result.length;
     //   categoryPostsCountObj[eachCategory] = count;
@@ -191,36 +210,13 @@ router.patch("/updateCategories", async (req, res, next) => {
 
     // await colInfo.updateOne(
     //   { _id: "info" },
-    //   { $set: { categoryPostsCount: categoryPostsCountObj } }
+    //   { $set: { categoryData: categoryPostsCountObj } }
     // );
 
     // const info = await colInfo.findOne({ _id: "info" });
-    // const categoryPostsCountValue = info.categoryPostsCount;
+    // const categoryDataValue = info.categoryData;
 
-    // res.status(200).send(categoryPostsCountValue);
-
-    const newCategories = req.body;
-
-    const db = await getDB();
-    const colPost = db.collection("post");
-    const colInfo = db.collection("info");
-
-    const categoryPostsCountObj = {};
-    for (let eachCategory of newCategories) {
-      const result = await colPost.find({ category: eachCategory }).toArray();
-      const count = result.length;
-      categoryPostsCountObj[eachCategory] = count;
-    }
-
-    await colInfo.updateOne(
-      { _id: "info" },
-      { $set: { categoryPostsCount: categoryPostsCountObj } }
-    );
-
-    const info = await colInfo.findOne({ _id: "info" });
-    const categoryPostsCountValue = info.categoryPostsCount;
-
-    res.status(200).send(categoryPostsCountValue);
+    // res.status(200).send(categoryDataValue);
   } catch (error) {
     console.log(error);
   }
@@ -257,8 +253,8 @@ router.patch("/:_id", async (req, res, next) => {
     let info = null;
 
     if (prevCategory !== editedCategory) {
-      const targetCategory1 = `categoryPostsCount.${prevCategory}`;
-      const targetCategory2 = `categoryPostsCount.${editedCategory}`;
+      const targetCategory1 = `categoryData.${prevCategory}`;
+      const targetCategory2 = `categoryData.${editedCategory}`;
 
       await colInfo.updateOne(
         { _id: "info" },
@@ -268,9 +264,9 @@ router.patch("/:_id", async (req, res, next) => {
       info = await colInfo.findOne({ _id: "info" });
     }
 
-    const categoryPostsCountValue = info.categoryPostsCount;
+    const newCategoryData = info.categoryData;
 
-    res.status(200).send(categoryPostsCountValue);
+    res.status(200).send(newCategoryData);
   } catch (error) {
     console.log(error);
   }
@@ -287,7 +283,7 @@ router.delete("/:_id", async (req, res, next) => {
     const post = await colPost.findOne({ _id: _id });
     const category = post.category;
 
-    const targetCategory = `categoryPostsCount.${category}`;
+    const targetCategory = `categoryData.${category}`;
 
     await colInfo.updateOne(
       { _id: "info" },
@@ -296,7 +292,10 @@ router.delete("/:_id", async (req, res, next) => {
 
     await colPost.deleteOne({ _id: _id });
 
-    res.status(200).send();
+    const result = await colInfo.findOne({ _id: "info" });
+    const newCategoryData = result.categoryData;
+
+    res.status(200).send(newCategoryData);
   } catch (error) {
     console.log(error);
   }
