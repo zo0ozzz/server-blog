@@ -6,7 +6,7 @@ const PORT = process.env.PORT;
 const cors = require("cors");
 
 // router
-const postRouter = require("./posts.js");
+const postRouter = require("./post.js");
 const imageRouter = require("./image.js");
 
 const getDB = require("./db.js");
