@@ -146,15 +146,29 @@ router.post("/", async (req, res, next) => {
       category: newPost.category,
     });
 
-    const targetCategory = `categoryData.${newPost.category}`;
+    const prevCategoryData = info.categoryData;
+    const newPostCategory = newPost.category;
+    const newCategoryData = prevCategoryData.map((item, index) => {
+      if (item.name === newPostCategory) {
+        const prevElement = prevCategoryData[index];
+        const newElement = {
+          ...prevElement,
+          postCount: prevElement.postCount + 1,
+        };
+
+        return newElement;
+      }
+
+      return item;
+    });
 
     await colInfo.updateOne(
       { _id: "info" },
-      { $inc: { lastPost_id: 1, lastPostNumber: 1, [targetCategory]: 1 } }
+      {
+        $inc: { lastPost_id: 1, lastPostNumber: 1 },
+        $set: { categoryData: newCategoryData },
+      }
     );
-
-    const newInfo = await colInfo.findOne({ _id: "info" });
-    const newCategoryData = newInfo.categoryData;
 
     res.status(200).send({
       _id: lastPost_id + 1,
@@ -238,7 +252,7 @@ router.patch("/:_id", async (req, res, next) => {
     const editedContent = editedPost.content;
     const editedCategory = editedPost.category;
 
-    const result = await colPost.updateOne(
+    await colPost.updateOne(
       { _id: _id },
       {
         $set: {
@@ -250,23 +264,64 @@ router.patch("/:_id", async (req, res, next) => {
       }
     );
 
-    let info = null;
-
     if (prevCategory !== editedCategory) {
-      const targetCategory1 = `categoryData.${prevCategory}`;
-      const targetCategory2 = `categoryData.${editedCategory}`;
+      const info = await colInfo.findOne({ _id: "info" });
+      const prevCategoryData = info.categoryData;
+      const newCategoryData = prevCategoryData.map((item, index) => {
+        const targetCategory = item.name;
+        if (targetCategory === prevCategory) {
+          const prevElement = prevCategoryData[index];
+          const newElement = {
+            ...prevElement,
+            postCount: prevElement.postCount - 1,
+          };
+
+          return newElement;
+        }
+
+        if (targetCategory === editedCategory) {
+          const prevElement = prevCategoryData[index];
+          const newElement = {
+            ...prevElement,
+            postCount: prevElement.postCount + 1,
+          };
+
+          return newElement;
+        }
+
+        return item;
+      });
 
       await colInfo.updateOne(
         { _id: "info" },
-        { $inc: { [targetCategory1]: -1, [targetCategory2]: 1 } }
+        { $set: { categoryData: newCategoryData } }
       );
 
-      info = await colInfo.findOne({ _id: "info" });
+      res.status(200).send(newCategoryData);
     }
 
-    const newCategoryData = info.categoryData;
+    res.status(200);
 
-    res.status(200).send(newCategoryData);
+    // const arrayFilters = [
+    //   { "element.name": { $eq: prevCategory } },
+    //   { "element.name": { $eq: editedCategory } },
+    // ];
+
+    // await colInfo.updateOne(
+    //   { _id: "info" },
+    //   {
+    //     $inc: {
+    //       "categoryData.$[prevCategory].postCount": -1,
+    //       "categoryData.$[editedCategory].postCount": 1,
+    //     },
+    //   },
+    //   { arrayFilters: arrayFilters }
+    // );
+
+    // const info = await colInfo.findOne({ _id: "info" });
+    // const newCategoryData = info.categoryData;
+
+    // res.status(200).send(newCategoryData);
   } catch (error) {
     console.log(error);
   }
@@ -283,11 +338,9 @@ router.delete("/:_id", async (req, res, next) => {
     const post = await colPost.findOne({ _id: _id });
     const category = post.category;
 
-    const targetCategory = `categoryData.${category}`;
-
     await colInfo.updateOne(
-      { _id: "info" },
-      { $inc: { lastPostNumber: -1, [targetCategory]: -1 } }
+      { _id: "info", "categoryData.name": category },
+      { $inc: { lastPostNumber: -1, "categoryData.$.postCount": -1 } }
     );
 
     await colPost.deleteOne({ _id: _id });
