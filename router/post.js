@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const getDB = require("./db.js");
-const getTimeCode = require("./timeCode.js");
+const getDB = require("../db.js");
+const getTimeCode = require("../timeCode.js");
 
 router.use(function timeLog(req, res, next) {
   console.log("* /post/... ", getTimeCode());
@@ -87,38 +87,28 @@ router.get("/categories/:category", async (req, res, next) => {
   try {
     const category = req.params.category;
 
-    if (category === "전체") {
-      const db = await getDB();
-      const col = db.collection("post");
+    const db = await getDB();
+    const colPost = db.collection("post");
+    const colInfo = db.collection("info");
 
-      const posts = await col.find().toArray();
+    const info = await colInfo.findOne({ _id: "info" });
+    const allPostCategoryName = info.categoryData.find(
+      (item) => item.id === 0
+    ).name;
 
-      res.send(posts);
+    if (category === allPostCategoryName) {
+      const allPosts = await colPost.find().toArray();
 
-      return;
-    }
-
-    // if (category === "미분류") {
-    //   const db = await getDB();
-    //   const col = db.collection("post");
-
-    //   const posts = await col.find({ category: "미분류" }).toArray();
-
-    //   res.send(posts);
-
-    //   return;
-    // }
-
-    if (category !== "전체") {
-      const db = await getDB();
-      const col = db.collection("post");
-
-      const posts = await col.find({ category: category }).toArray();
-
-      res.send(posts);
+      res.status(200).send(allPosts);
 
       return;
     }
+
+    const posts = await colPost.find({ category: category }).toArray();
+
+    res.status(200).send(posts);
+
+    return;
   } catch (error) {
     console.log(error);
   }
@@ -179,26 +169,28 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-router.patch("/updateCategories", async (req, res, next) => {
+router.patch("/updateCategoryData", async (req, res, next) => {
   try {
     const categoryData = req.body;
-    // const categories = categoryData.map((item) => item.name);
 
     const db = await getDB();
     const colPost = db.collection("post");
     const colInfo = db.collection("info");
 
     const newCategoryData = [];
-    for (const { name } of categoryData) {
-      console.log(name);
-      if (name === "전체") {
+    for (const { id, name } of categoryData) {
+      if (id === 0) {
         const result = await colInfo.findOne({ _id: "info" });
         const totalPostCount = result.lastPostNumber;
-        newCategoryData.push({ name: name, postCount: totalPostCount });
+        newCategoryData.push({ id: id, name: name, postCount: totalPostCount });
       } else {
         const result = await colPost.find({ category: name }).toArray();
         const categoryPostCount = result.length;
-        newCategoryData.push({ name: name, postCount: categoryPostCount });
+        newCategoryData.push({
+          id: id,
+          name: name,
+          postCount: categoryPostCount,
+        });
       }
     }
 
@@ -298,13 +290,15 @@ router.patch("/:_id", async (req, res, next) => {
       );
 
       res.status(200).send(newCategoryData);
+
+      return;
     }
 
-    res.status(200);
+    res.status(200).end();
 
     // const arrayFilters = [
-    //   { "element.name": { $eq: prevCategory } },
-    //   { "element.name": { $eq: editedCategory } },
+    //   { "element.name": prevCategory },
+    //   { "element.name": editedCategory },
     // ];
 
     // await colInfo.updateOne(
@@ -318,8 +312,8 @@ router.patch("/:_id", async (req, res, next) => {
     //   { arrayFilters: arrayFilters }
     // );
 
-    // const info = await colInfo.findOne({ _id: "info" });
-    // const newCategoryData = info.categoryData;
+    // const newInfo = await colInfo.findOne({ _id: "info" });
+    // const newCategoryData = newInfo.categoryData;
 
     // res.status(200).send(newCategoryData);
   } catch (error) {

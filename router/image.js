@@ -4,8 +4,8 @@ const multer = require("multer");
 const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
-const { baseURL } = require("./url.js");
-const getTimeCode = require("./timeCode.js");
+const { baseURL } = require("../url.js");
+const getTimeCode = require("../timeCode.js");
 const { Readable } = require("stream");
 
 // const storage = multer.diskStorage({

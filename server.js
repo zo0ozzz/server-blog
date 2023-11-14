@@ -6,14 +6,16 @@ const PORT = process.env.PORT;
 const cors = require("cors");
 
 // router
-const postRouter = require("./post.js");
-const imageRouter = require("./image.js");
+const godRouter = require("./router/god.js");
+const postRouter = require("./router/post.js");
+const imageRouter = require("./router/image.js");
 
 const getDB = require("./db.js");
 
 app.use(cors());
 app.use(express.json());
 
+app.use("/god", godRouter);
 app.use("/post", postRouter);
 app.use("/image", imageRouter);
 
