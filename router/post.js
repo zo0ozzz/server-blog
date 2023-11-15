@@ -178,16 +178,22 @@ router.patch("/updateCategoryData", async (req, res, next) => {
     const colInfo = db.collection("info");
 
     const newCategoryData = [];
-    for (const { id, name } of categoryData) {
+    for (const { id, name, order } of categoryData) {
       if (id === 0) {
         const result = await colInfo.findOne({ _id: "info" });
         const totalPostCount = result.lastPostNumber;
-        newCategoryData.push({ id: id, name: name, postCount: totalPostCount });
+        newCategoryData.push({
+          id: id,
+          order: order,
+          name: name,
+          postCount: totalPostCount,
+        });
       } else {
         const result = await colPost.find({ category: name }).toArray();
         const categoryPostCount = result.length;
         newCategoryData.push({
           id: id,
+          order: order,
           name: name,
           postCount: categoryPostCount,
         });
