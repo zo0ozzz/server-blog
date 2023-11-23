@@ -177,15 +177,72 @@ router.patch("/updateCategoryData", async (req, res, next) => {
     const colPost = db.collection("post");
     const colInfo = db.collection("info");
 
+    // 신경 써야 할 건 두 가지 경우
+    // 1. 비어 있지 않은 카테고리가 삭제된 경우
+    // - 과제: 해당 카테고리에 속해 있던 post들의 카테고리를 미분류로 재지정해준다.
+    // - 이전 데이터의 id로 새로운 데이터를 순회해 해당 id에 걸리는 요소가 없다면
+    //   이전에 있던 카테고리 이름을 가지고 카테고리 교체가 필요한 post를 지정할 수 있을 것.
+    // 2. 기존 카테고리의 이름이 수정된 경우
+    // - 과제: 이전 카테고리 이름으로 분류된 post들의 카테고리를 수정된 카테고리 이름으로 재지정해준다.
+    // - god 페이지에서는 카테고리 id는 건들 수 없음으로 id로 순회하며 이름의 일치 여부를 확인해보면 될 것.
+    // - 1번 문제와 비슷하게 풀 수 있을 것 같다.
+    // - 일단 이 두 경우에 따르는 변화를 먼저 처리해주고, 그 뒤는 밑의 로직을 비슷하게 써도 될 듯하다.
+    // - 아 id로 전체를 알아보는 건 고쳐야 함. isAllCategory
+
+    const targetData = await colInfo.findOne({ _id: "info" });
+    const prevCategoryData = targetData.categoryData;
+
+    // 2. 카테고리 이름 변경됨
+    // - 그냥 반환 없이 처리해보자.
+    // - 여기서 다 처리해버리려면 filter나 find나 별 상관은 없겠다.
+    //  - 만족하면 멈추는 find를 사용하는 게 낫지 않을까.
+    for (prevItem of prevCategoryData) {
+      const element = categoryData.find(
+        (item) => item.id === prevItem.id && item.name !== prevItem.name
+      );
+
+      if (element !== undefined) {
+        const prevCategoryName = prevItem.name;
+        const categoryName = element.name;
+
+        await colPost.updateMany(
+          { category: prevCategoryName },
+          { $set: { category: categoryName } }
+        );
+      }
+
+      const element2 = categoryData.find((item) => item.id === prevItem.id);
+
+      if (element2 === undefined && prevItem.postCount > 0) {
+        const prevCategoryName = prevItem.name;
+        const noCategory = categoryData.find(
+          (item) => item.isNoCategory === true
+        ).name;
+
+        await colPost.updateMany(
+          { category: prevCategoryName },
+          { $set: { category: noCategory } }
+        );
+      }
+    }
+
     const newCategoryData = [];
-    for (const { id, name, order } of categoryData) {
-      if (id === 0) {
+    for (const {
+      id,
+      name,
+      isRepresentative,
+      isAllCategory,
+      isNoCategory,
+    } of categoryData) {
+      if (isAllCategory === true) {
         const result = await colInfo.findOne({ _id: "info" });
         const totalPostCount = result.lastPostNumber;
         newCategoryData.push({
           id: id,
-          order: order,
           name: name,
+          isRepresentative: isRepresentative,
+          isAllCategory: true,
+          isNoCategory: false,
           postCount: totalPostCount,
         });
       } else {
@@ -193,8 +250,10 @@ router.patch("/updateCategoryData", async (req, res, next) => {
         const categoryPostCount = result.length;
         newCategoryData.push({
           id: id,
-          order: order,
           name: name,
+          isRepresentative: isRepresentative,
+          isAllCategory: false,
+          isNoCategory: isNoCategory,
           postCount: categoryPostCount,
         });
       }
