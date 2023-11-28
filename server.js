@@ -9,6 +9,7 @@ const cors = require("cors");
 const godRouter = require("./router/god.js");
 const postRouter = require("./router/post.js");
 const imageRouter = require("./router/image.js");
+const loginRouter = require("./router/login.js");
 
 const getDB = require("./db.js");
 
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use("/god", godRouter);
 app.use("/post", postRouter);
 app.use("/image", imageRouter);
+app.use("/login", loginRouter);
 
 app.get("/create", async (req, res, next) => {
   try {
