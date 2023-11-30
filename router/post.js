@@ -354,12 +354,19 @@ router.patch("/:_id", async (req, res, next) => {
         { $set: { categoryData: newCategoryData } }
       );
 
-      res.status(200).send(newCategoryData);
+      res.status(200).send({ categoryData: newCategoryData });
 
       return;
     }
 
-    res.status(200).end();
+    if (prevCategory === editedCategory) {
+      const info = await colInfo.findOne({ _id: "info" });
+      const categoryData = info.categoryData;
+
+      res.status(200).send({ categoryData: categoryData });
+
+      return;
+    }
 
     // const arrayFilters = [
     //   { "element.name": prevCategory },
@@ -382,7 +389,7 @@ router.patch("/:_id", async (req, res, next) => {
 
     // res.status(200).send(newCategoryData);
   } catch (error) {
-    console.log(error);
+    next(error);
   }
 });
 
@@ -407,14 +414,14 @@ router.delete("/:_id", async (req, res, next) => {
     const result = await colInfo.findOne({ _id: "info" });
     const newCategoryData = result.categoryData;
 
-    res.status(200).send(newCategoryData);
+    res.status(200).send({ categoryData: newCategoryData });
   } catch (error) {
     console.log(error);
   }
 });
 
-router.use((err, req, res, next) => {
-  console.log("끝단에서 에러 처리: ", err);
+router.use((error, req, res, next) => {
+  console.error(error);
 });
 
 module.exports = router;

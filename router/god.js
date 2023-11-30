@@ -61,4 +61,45 @@ router.get("/categoryData", async (req, res, next) => {
   }
 });
 
+router.get("/hellowMessage", async (req, res, next) => {
+  try {
+    const db = await getDB();
+    const colInfo = db.collection("info");
+
+    const infoData = await colInfo.findOne({ _id: "info" });
+    const hellowMessage = infoData.hellowMessage;
+
+    res.status(200).send({ hellowMessage: hellowMessage });
+  } catch (error) {
+    res.status(500).end();
+
+    next(error);
+  }
+});
+
+router.patch("/hellowMessage", async (req, res, next) => {
+  try {
+    const body = req.body;
+    const newHellowMessage = body.hellowMessage;
+
+    const db = await getDB();
+    const colInfo = db.collection("info");
+
+    await colInfo.updateOne(
+      { _id: "info" },
+      { $set: { hellowMessage: newHellowMessage } }
+    );
+
+    res.status(200).end();
+  } catch (error) {
+    res.status(500).end();
+
+    next(error);
+  }
+});
+
+router.use((error, req, res, next) => {
+  console.error(error);
+});
+
 module.exports = router;
