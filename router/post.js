@@ -24,7 +24,7 @@ router.get("/", async (req, res, next) => {
 
 router.get("/search", async (req, res, next) => {
   try {
-    const searchString = req.query.searchString;
+    const searchQuery = req.query.searchQuery;
 
     const db = await getDB();
     const col = db.collection("post");
@@ -34,7 +34,7 @@ router.get("/search", async (req, res, next) => {
     //     $search: {
     //       index: "titleAndContentIndex",
     //       text: {
-    //         query: searchString,
+    //         query: searchQuery,
     //         path: ["title", "content"],
     //       },
     //     },
@@ -48,8 +48,8 @@ router.get("/search", async (req, res, next) => {
 
     const query = {
       $or: [
-        { title: { $regex: searchString, $options: "i" } },
-        { content: { $regex: searchString, $options: "i" } },
+        { title: { $regex: searchQuery, $options: "i" } },
+        { content: { $regex: searchQuery, $options: "i" } },
       ],
     };
     // - $or는 여러 필드 중 하나에서만 해당 조건을 만족해도 서치 결과값으로 넘겨줌.
@@ -58,9 +58,9 @@ router.get("/search", async (req, res, next) => {
     // - 이렇게 하면 전체든 부분이든 주어진 단어가 들어가는 모든 걸 검색할 수는 있는데
     // - 대상을 하나하나 다 순회해야 해서 리소스가 많이 듦.
 
-    const posts = await col.find(query).toArray();
+    const searchPosts = await col.find(query).toArray();
 
-    res.status(200).send(posts);
+    res.status(200).send({ searchPosts: searchPosts });
   } catch (error) {
     console.log(error);
     next(error);
@@ -83,34 +83,39 @@ router.get("/:_id", async (req, res, next) => {
   }
 });
 
-router.get("/categories/:category", async (req, res, next) => {
+router.get("/categories/:categoryName", async (req, res, next) => {
   try {
-    const category = req.params.category;
+    const categoryName = req.params.categoryName;
 
     const db = await getDB();
-    const colPost = db.collection("post");
     const colInfo = db.collection("info");
+    const colPost = db.collection("post");
 
-    const info = await colInfo.findOne({ _id: "info" });
-    const allPostCategoryName = info.categoryData.find(
-      (item) => item.id === 0
+    const infoData = await colInfo.findOne({ _id: "info" });
+    // 모든 게시물을 포함하는 카테고리의 이름
+    const allCategoryName = infoData.categoryData.find(
+      (item) => item.isAllCategory === true
     ).name;
 
-    if (category === allPostCategoryName) {
-      const allPosts = await colPost.find().toArray();
+    if (categoryName === allCategoryName) {
+      // - 요청 카테고리 이름이 갓테고리의 이름과 같다면,
+      // -> 모든 post를 전송.
+      const allPosts = await colPost.find({}).toArray();
 
-      res.status(200).send(allPosts);
-
-      return;
+      res.status(200).send({ categoryPosts: allPosts });
     }
 
-    const posts = await colPost.find({ category: category }).toArray();
+    if (categoryName !== allCategoryName) {
+      // - 요청 카테고리 이름이 갓테고리의 이름과 같지 않다면,
+      // -> 해당 카테고리의 post를 전송.
+      const categoryPosts = await colPost
+        .find({ category: categoryName })
+        .toArray();
 
-    res.status(200).send(posts);
-
-    return;
+      res.status(200).send({ categoryPosts: categoryPosts });
+    }
   } catch (error) {
-    console.log(error);
+    next(error);
   }
 });
 
