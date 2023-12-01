@@ -425,6 +425,37 @@ router.delete("/:_id", async (req, res, next) => {
   }
 });
 
+router.get("/test/:_id", async (req, res, next) => {
+  try {
+    const _id = parseInt(req.params._id);
+
+    const db = await getDB();
+    const colPost = db.collection("post");
+
+    const post = await colPost.findOne({ _id: _id });
+    const categoryName = post.category;
+    const categoryPosts = await colPost
+      .find({ category: categoryName })
+      .toArray();
+    const index = categoryPosts.findIndex((item) => item._id === _id);
+    const prevPost = categoryPosts[index - 1];
+    const currentPost = categoryPosts[index];
+    const nextPost = categoryPosts[index + 1];
+
+    const posts = {
+      prev: prevPost ? { _id: prevPost._id, title: prevPost.title } : null,
+      current: currentPost,
+      next: nextPost ? { _id: nextPost._id, title: nextPost.title } : null,
+    };
+
+    res.status(200).send({ posts: posts });
+  } catch (error) {
+    res.status(500).end();
+
+    next(error);
+  }
+});
+
 router.use((error, req, res, next) => {
   console.error(error);
 });
