@@ -144,7 +144,7 @@ router.post("/", async (req, res, next) => {
     const prevCategoryData = info.categoryData;
     const newPostCategory = newPost.category;
     const newCategoryData = prevCategoryData.map((item, index) => {
-      if (item.name === newPostCategory) {
+      if (item.name === newPostCategory || item.isAllCategory === true) {
         const prevElement = prevCategoryData[index];
         const newElement = {
           ...prevElement,
@@ -407,21 +407,35 @@ router.delete("/:_id", async (req, res, next) => {
     const colInfo = db.collection("info");
 
     const post = await colPost.findOne({ _id: _id });
-    const category = post.category;
+    const postCategoryName = post.category;
+
+    const infoData = await colInfo.findOne({ _id: "info" });
+    const prevCategoryData = infoData.categoryData;
+    const newCategoryData = prevCategoryData.map((item) => {
+      if (item.name === postCategoryName || item.isAllCategory === true) {
+        const newCategoryDataElement = {
+          ...item,
+          postCount: item.postCount - 1,
+        };
+
+        return newCategoryDataElement;
+      } else {
+        return item;
+      }
+    });
 
     await colInfo.updateOne(
-      { _id: "info", "categoryData.name": category },
-      { $inc: { lastPostNumber: -1, "categoryData.$.postCount": -1 } }
+      { _id: "info" },
+      { $set: { categoryData: newCategoryData } }
     );
 
     await colPost.deleteOne({ _id: _id });
 
-    const result = await colInfo.findOne({ _id: "info" });
-    const newCategoryData = result.categoryData;
-
     res.status(200).send({ categoryData: newCategoryData });
   } catch (error) {
-    console.log(error);
+    res.status(500).end();
+
+    next(error);
   }
 });
 
